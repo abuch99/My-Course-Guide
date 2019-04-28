@@ -9,24 +9,35 @@ import ToggleButton from "react-bootstrap/ToggleButton";
 import ToggleButtonGroup from "react-bootstrap/ToggleButtonGroup";
 
 import TimeAgo from "react-timeago";
-
 import { axiosPOST } from "../utils/axiosClient";
 import { getDecodedToken } from "../utils/jwt";
+import Button from "react-bootstrap/Button";
+// import { userInfo } from "os";
 
 class Review extends Component {
   constructor(props) {
     super(props);
     this.state = {
       review: null,
-      vote: null
+      vote: null,
+      isDisabled: null,
+      reportmsg: null
     };
   }
 
   componentDidMount() {
-    this.setState({ review: this.props.review, vote: this.props.vote });
+    console.log(this.props.reported);
+    this.setState({
+      review: this.props.review,
+      vote: this.props.vote,
+      isDisabled: this.props.reported ? true : false,
+      reportmsg: this.props.reported ? "Reported" : "Report"
+    });
   }
 
   render() {
+    // let reportmsg = ;
+    // let isDisabled = this.props.report ? true : false;
     let isStudent = getDecodedToken().role === "student";
     if (!this.state.review) return <div />;
     let badgeColor = val => {
@@ -145,15 +156,41 @@ class Review extends Component {
               </Row>
               <Row>
                 <Col lg={7}>
-                  <small className="text-muted">
-                    Submitted <TimeAgo date={this.state.review.createdAt} />
-                    &nbsp;by&nbsp;
-                    {this.state.review.isAnonymous
-                      ? "Anonymous"
-                      : `${this.state.review.student.name} - ${
-                          this.state.review.student.id
-                        }`}
-                  </small>
+                  <Row>
+                    <Col>
+                      <small className="text-muted">
+                        Submitted <TimeAgo date={this.state.review.createdAt} />
+                        &nbsp;by&nbsp;
+                        {this.state.review.isAnonymous
+                          ? "Anonymous"
+                          : `${this.state.review.student.name} - ${
+                              this.state.review.student.id
+                            }`}
+                      </small>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col>
+                      <small className="text-muted">
+                        <Button
+                          disabled={this.state.isDisabled}
+                          variant="link"
+                          size="sm"
+                          onClick={() => {
+                            axiosPOST("/api/reports", {
+                              forModel: "Review",
+                              for: this.state.review._id
+                            }).then(res => {
+                              this.setState({ isDisabled: true });
+                            });
+                            this.setState({ reportmsg: "Reported" });
+                          }}
+                        >
+                          {this.state.reportmsg}
+                        </Button>{" "}
+                      </small>
+                    </Col>
+                  </Row>
                 </Col>
                 <Col lg={5}>
                   <ToggleButtonGroup
